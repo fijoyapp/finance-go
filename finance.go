@@ -24,18 +24,20 @@ func init() {
 	Logger = log.New(os.Stderr, "", log.LstdFlags)
 }
 
+var (
+	// YFinURL is the URL of the yahoo service backend.
+	YFinURL        = "https://query2.finance.yahoo.com"
+	YQuotePath     = "/v7/finance/quote"
+	YOptionsPrefix = "/v7/finance/options/"
+)
+
 const (
 	// YFinBackend is a constant representing the yahoo service backend.
 	YFinBackend SupportedBackend = "yahoo"
-	// YFinURL is the URL of the yahoo service backend.
-	YFinURL string = "https://query2.finance.yahoo.com"
 	// BATSBackend is a constant representing the uploads service backend.
 	BATSBackend SupportedBackend = "bats"
 	// BATSURL is the URL of the uploads service backend.
 	BATSURL string = ""
-
-	YQuotePath     = "/v7/finance/quote"
-	YOptionsPrefix = "/v7/finance/options/"
 
 	// Private constants.
 	// ------------------
