@@ -30,7 +30,7 @@ func CreateChartTimeError() error {
 // CreateRemoteError returns an error
 // with a message about a remote api problem.
 func CreateRemoteError(e error) error {
-	return fmt.Errorf("code: %s, detail: %s", remoteErrorCode, e.Error())
+	return fmt.Errorf("code: %s, detail: %w", remoteErrorCode, e)
 }
 
 // CreateRemoteErrorS returns an error

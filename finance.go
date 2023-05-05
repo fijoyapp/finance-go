@@ -3,6 +3,7 @@ package finance
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -226,7 +227,11 @@ func (s *BackendConfiguration) Do(req *http.Request, v interface{}) error {
 		if LogLevel > 0 {
 			Logger.Printf("API error: %q\n", resBody)
 		}
-		return CreateRemoteErrorS("error response recieved from upstream api")
+		return &RemoteError{
+			Msg:        "error response recieved from upstream api",
+			StatusCode: res.StatusCode,
+			Body:       string(resBody),
+		}
 	}
 
 	if LogLevel > 2 {
@@ -238,4 +243,14 @@ func (s *BackendConfiguration) Do(req *http.Request, v interface{}) error {
 	}
 
 	return nil
+}
+
+type RemoteError struct {
+	Msg        string
+	StatusCode int
+	Body       string
+}
+
+func (e *RemoteError) Error() string {
+	return fmt.Sprintf("status: %d, detail: %s", e.StatusCode, e.Msg)
 }
