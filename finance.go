@@ -34,6 +34,9 @@ const (
 	// BATSURL is the URL of the uploads service backend.
 	BATSURL string = ""
 
+	YQuotePath     = "/v7/finance/quote"
+	YOptionsPrefix = "/v7/finance/options/"
+
 	// Private constants.
 	// ------------------
 
