@@ -28,8 +28,8 @@ func init() {
 var (
 	// YFinURL is the URL of the yahoo service backend.
 	YFinURL        = "https://query2.finance.yahoo.com"
-	YQuotePath     = "/v7/finance/quote"
-	YOptionsPrefix = "/v7/finance/options/"
+	YQuotePath     = "/v6/finance/quote"
+	YOptionsPrefix = "/v6/finance/options/"
 )
 
 const (
