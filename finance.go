@@ -4,15 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/piquette/finance-go/form"
+	"golang.org/x/net/publicsuffix"
 )
 
 // Printfer is an interface to be implemented by Logger.
@@ -23,13 +26,23 @@ type Printfer interface {
 // init sets inital logger defaults.
 func init() {
 	Logger = log.New(os.Stderr, "", log.LstdFlags)
+
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		panic(err)
+	}
+
+	httpClient = &http.Client{
+		Jar:     jar,
+		Timeout: defaultHTTPTimeout,
+	}
 }
 
 var (
 	// YFinURL is the URL of the yahoo service backend.
 	YFinURL        = "https://query2.finance.yahoo.com"
-	YQuotePath     = "/v6/finance/quote"
-	YOptionsPrefix = "/v6/finance/options/"
+	YQuotePath     = "/v7/finance/quote"
+	YOptionsPrefix = "/v7/finance/options/"
 )
 
 const (
@@ -64,8 +77,9 @@ var (
 	// Private vars.
 	// -------------
 
-	httpClient = &http.Client{Timeout: defaultHTTPTimeout}
+	httpClient *http.Client
 	backends   Backends
+	yCrumb     string
 )
 
 // SupportedBackend is an enumeration of supported api endpoints.
@@ -191,6 +205,46 @@ func (s *BackendConfiguration) NewRequest(method, path string, ctx *context.Cont
 	return req, nil
 }
 
+func setBrowserHeaders(req *http.Request) {
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
+}
+
+func getYahooCrumb(client *http.Client) (string, error) {
+	req, err := http.NewRequest("GET", "https://finance.yahoo.com/", nil)
+	if err != nil {
+		return "", err
+	}
+	setBrowserHeaders(req)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	io.Copy(ioutil.Discard, resp.Body)
+
+	req, err = http.NewRequest("GET", "https://query2.finance.yahoo.com/v1/test/getcrumb", nil)
+	if err != nil {
+		return "", err
+	}
+	setBrowserHeaders(req)
+
+	resp, err = client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
+
 // Do is used by Call to execute an API request and parse the response. It uses
 // the backend's HTTP client to execute the request and unmarshals the response
 // into v. It also handles unmarshaling errors returned by the API.
@@ -200,6 +254,20 @@ func (s *BackendConfiguration) Do(req *http.Request, v interface{}) error {
 	}
 
 	start := time.Now()
+
+	if s.Type == YFinBackend {
+		if yCrumb == "" {
+			crumb, err := getYahooCrumb(s.HTTPClient)
+			if err != nil {
+				return fmt.Errorf("get yahoo crumb err: %w", err)
+			}
+			yCrumb = crumb
+		}
+
+		query := req.URL.Query()
+		query.Add("crumb", yCrumb)
+		req.URL.RawQuery = query.Encode()
+	}
 
 	res, err := s.HTTPClient.Do(req)
 
