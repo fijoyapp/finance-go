@@ -176,6 +176,8 @@ func (s *BackendConfiguration) Call(path string, form *form.Values, ctx *context
 		return err
 	}
 
+	setBrowserHeaders(req)
+
 	if err := s.Do(req, v); err != nil {
 		return err
 	}
