@@ -205,9 +205,13 @@ func (s *BackendConfiguration) NewRequest(method, path string, ctx *context.Cont
 	return req, nil
 }
 
+var (
+	UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+)
+
 func setBrowserHeaders(req *http.Request) {
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
+	req.Header.Set("User-Agent", UserAgent)
 }
 
 func getYahooCrumb(client *http.Client) (string, error) {
