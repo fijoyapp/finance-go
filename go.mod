@@ -1,4 +1,4 @@
-module github.com/piquette/finance-go
+module github.com/fijoyapp/finance-go
 
 go 1.23.0
 
